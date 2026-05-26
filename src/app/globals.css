@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #0A0A0A;
+    --foreground: #FAFAFA;
+    --muted: #A1A1AA;
+    
+    --primary: #8B5CF6; /* Violet */
+    --primary-foreground: #FAFAFA;
+    
+    --accent: #3B82F6; /* Blue */
+    
+    --surface: rgba(255, 255, 255, 0.05);
+    --surface-hover: rgba(255, 255, 255, 0.1);
+    --border: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark {
+    --background: #0A0A0A;
+    --foreground: #FAFAFA;
+  }
+}
+
+* {
+  @apply box-border border-border;
+}
+
+html {
+  @apply scroll-smooth;
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+.glass {
+  @apply bg-surface backdrop-blur-md border border-border;
+}
+
+.glass-card {
+  @apply bg-surface backdrop-blur-md border border-border rounded-xl transition-all duration-300;
+}
+
+.glass-card:hover {
+  @apply bg-surface-hover transform -translate-y-1 shadow-[0_8px_30px_rgb(0,0,0,0.12)];
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-blue-500;
+}
