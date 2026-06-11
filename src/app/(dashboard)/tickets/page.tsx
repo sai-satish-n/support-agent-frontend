@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Filter, Loader2, ArrowRight, Ticket as TicketIcon } from 'lucide-react'
+import { Plus, Search, Filter, Loader2, ArrowRight, Ticket as TicketIcon, Trash2 } from 'lucide-react'
 import { ticketService, type Ticket } from '@/services/ticket'
 import { format } from 'date-fns'
 import { useAuthStore } from '@/store/auth'
@@ -33,6 +33,18 @@ export default function TicketsPage() {
       setError('Failed to load tickets.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteTicket = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    if (!confirm('Are you sure you want to delete this ticket? This cannot be undone.')) return
+    
+    try {
+      await ticketService.deleteTicket(id)
+      setTickets(tickets.filter(t => t.id !== id))
+    } catch (err) {
+      alert('Failed to delete ticket.')
     }
   }
 
@@ -177,8 +189,19 @@ export default function TicketsPage() {
                       Updated {format(new Date(ticket.updated_at), 'MMM d, yyyy')}
                     </span>
                   </div>
-                  <div className={`capitalize ${getPriorityColor(ticket.priority)}`}>
-                    {ticket.priority} Priority
+                  <div className="flex items-center gap-4">
+                    <div className={`capitalize ${getPriorityColor(ticket.priority)}`}>
+                      {ticket.priority} Priority
+                    </div>
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={(e) => handleDeleteTicket(e, ticket.id)}
+                        className="text-red-400 hover:text-red-300 p-1 rounded-md hover:bg-red-500/10 transition-colors"
+                        title="Delete Ticket"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </Link>

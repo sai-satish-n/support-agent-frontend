@@ -68,4 +68,9 @@ export const ticketService = {
     )
     return response.data
   },
+
+  // Delete ticket (admin only)
+  async deleteTicket(ticketId: string): Promise<void> {
+    await apiClient.delete(`/tickets/${ticketId}`)
+  },
 }
