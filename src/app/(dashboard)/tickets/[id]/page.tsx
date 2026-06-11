@@ -25,6 +25,7 @@ export default function TicketDetailPage() {
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
 
   const { user } = useAuthStore()
   // Single unified message list — the hook manages it for the customer stream path
@@ -167,6 +168,20 @@ export default function TicketDetailPage() {
     }
   }
 
+  const handleGetSummary = async () => {
+    setIsGeneratingSummary(true)
+    try {
+      const result = await ticketService.getAISummary(ticketId)
+      if (ticket) {
+        setTicket({ ...ticket, ai_summary: result.summary })
+      }
+    } catch (err) {
+      console.error('Failed to get AI summary', err)
+    } finally {
+      setIsGeneratingSummary(false)
+    }
+  }
+
   // Helper: is a given message a human agent reply?
   // Relies solely on the is_human flag set by the backend model_validate
   const isHumanMessage = (msg: ChatMessage) => msg.is_human === true
@@ -258,13 +273,12 @@ export default function TicketDetailPage() {
             const isHuman = isHumanMessage(msg)
             return (
               <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                  msg.role === 'user'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
                     ? 'bg-primary/20 text-primary'
                     : isHuman
                       ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                       : 'bg-primary border border-primary/50 text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]'
-                }`}>
+                  }`}>
                   {msg.role === 'user'
                     ? <User className="w-4 h-4" />
                     : isHuman
@@ -272,13 +286,12 @@ export default function TicketDetailPage() {
                       : <Bot className="w-4 h-4" />
                   }
                 </div>
-                <div className={`flex-1 max-w-[80%] ${
-                  msg.role === 'user'
+                <div className={`flex-1 max-w-[80%] ${msg.role === 'user'
                     ? 'bg-surface-hover p-4 rounded-xl rounded-tr-sm border border-border'
                     : isHuman
                       ? 'bg-emerald-950/30 p-4 rounded-xl rounded-tl-sm border border-emerald-500/20'
                       : 'bg-surface p-4 rounded-xl rounded-tl-sm border border-border'
-                }`}>
+                  }`}>
                   {/* Human agent label */}
                   {isHuman && (
                     <div className="flex items-center gap-1.5 mb-2">
@@ -306,9 +319,8 @@ export default function TicketDetailPage() {
                     </div>
                     {msg.role === 'assistant' && !isHuman && msg.confidence !== undefined && (
                       <div className="flex items-center gap-1.5">
-                        <div className={`w-2 h-2 rounded-full ${
-                          msg.confidence > 0.8 ? 'bg-green-400' : msg.confidence > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
-                        }`} />
+                        <div className={`w-2 h-2 rounded-full ${msg.confidence > 0.8 ? 'bg-green-400' : msg.confidence > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
+                          }`} />
                         <span className="text-[10px] text-muted">{(msg.confidence * 100).toFixed(0)}% Conf.</span>
                       </div>
                     )}
@@ -393,7 +405,7 @@ export default function TicketDetailPage() {
       </div>
 
       {/* Metadata Sidebar */}
-      <div className="w-80 glass-card p-6 flex flex-col space-y-6">
+      <div className="w-80 glass-card p-6 flex flex-col space-y-6 overflow-y-auto">
         <div>
           <h3 className="text-sm font-medium text-foreground mb-4">Ticket Details</h3>
           <div className="space-y-4">
@@ -446,13 +458,30 @@ export default function TicketDetailPage() {
               </div>
             </div>
 
-            {ticket.ai_summary && (
-              <div>
-                <div className="text-xs text-muted mb-1">AI Summary</div>
+            {isStaff && (<div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-muted">AI Summary</div>
+
+                <button
+                  onClick={handleGetSummary}
+                  disabled={isGeneratingSummary}
+                  className="text-xs px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors disabled:opacity-50 flex items-center gap-1"
+                >
+                  {isGeneratingSummary ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bot className="w-3 h-3" />}
+                  {ticket.ai_summary ? 'Regenerate' : 'Generate'}
+                </button>
+                )
+              </div>
+              {ticket.ai_summary ? (
                 <div className="text-sm text-foreground bg-surface p-3 rounded-lg border border-border mt-1">
                   {ticket.ai_summary}
                 </div>
-              </div>
+              ) : (
+                <div className="text-sm text-muted italic bg-surface/50 p-3 rounded-lg border border-border border-dashed mt-1">
+                  No summary generated yet.
+                </div>
+              )}
+            </div>
             )}
           </div>
         </div>
